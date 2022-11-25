@@ -6,5 +6,6 @@ import (
 
 func main() {
 	app, _ := core.NewApp()
-	app.Run()
+	go app.Run()
+	<-app.Exit
 }

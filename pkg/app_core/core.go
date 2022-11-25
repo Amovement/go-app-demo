@@ -3,11 +3,12 @@ package app_core
 import (
 	"bufio"
 	"fmt"
+	"github.com/Amovement/go-app-demo/pkg/printer"
 	"os"
 	"strings"
 )
 
-type Command map[string]func(...interface{})
+type Command map[string]func(Core, ...interface{})
 
 type Core struct {
 	Cmd  Command
@@ -18,19 +19,18 @@ func NewApp() (Core, error) {
 	app := Core{
 		Cmd: Command{
 			"help": getAppHelpInfo,
-			"exit": func(options ...interface{}) {
-				// TODO
-			},
+			"exit": exitApp,
 			"mode": getMode,
 		},
+		Exit: make(chan os.Signal),
 	}
 
 	return app, nil
 }
 
 func (app Core) Run() {
-	app.Cmd["help"]("")
-	fmt.Print("/")
+	app.Cmd["help"](app, "")
+	fmt.Print(">")
 
 	buf := bufio.NewScanner(os.Stdin)
 	for buf.Scan() {
@@ -38,11 +38,11 @@ func (app Core) Run() {
 		inputCommand := input[0]
 		inputOption := input[1:]
 		if _, ok := app.Cmd[inputCommand]; !ok {
-			fmt.Printf("[Error] Unknown Command: %s\n", inputCommand)
-			app.Cmd["help"]("")
+			app.Cmd["help"](app, "")
+			printer.PrintMessage("APP", "Error", "Unknown Command: "+inputCommand)
 		} else {
-			app.Cmd[inputCommand](inputOption)
+			app.Cmd[inputCommand](app, inputOption)
+			printer.PrintMessage("APP", "Info", "Executing the Command: "+inputCommand)
 		}
-		fmt.Print("/")
 	}
 }
